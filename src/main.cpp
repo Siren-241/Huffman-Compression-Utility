@@ -1,6 +1,6 @@
-#include <iostream>
-
 #include "lib/include/HuffmanCoding.h"
+#include <filesystem>
+#include <iostream>
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
@@ -10,10 +10,15 @@ int main(int argc, char *argv[]) {
   }
 
   std::string inputFile = argv[1];
-  std::string outputBinary = (argc >= 3) ? argv[2] : "output/compressed.bin";
-  std::string outputCodes = (argc >= 4) ? argv[3] : "output/codes.txt";
+  std::string outputBinary = (argc >= 3) ? argv[2] : "../output/compressed.bin";
+  std::string outputCodes = (argc >= 4) ? argv[3] : "../output/codes.txt";
 
-  std::ifstream inFile(inputFile);
+  std::filesystem::create_directories(
+      std::filesystem::path(outputBinary).parent_path());
+  std::filesystem::create_directories(
+      std::filesystem::path(outputCodes).parent_path());
+
+  std::ifstream inFile(inputFile, std::ios::binary);
   if (!inFile) {
     std::cerr << "Unable to open file: " << inputFile << "\n";
     return 1;

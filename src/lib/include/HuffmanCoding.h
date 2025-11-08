@@ -38,10 +38,16 @@ private:
   void writeCodesToFile(const std::string &file);
   std::string encodeText(const std::string &text);
 
+  std::string readFile(const std::string &filePath);
+
 public:
   HuffmanCoding() : root(nullptr) {}
 
   void compress(const std::string &inputText,
                 const std::string &outputBinaryFile,
                 const std::string &codesFile);
+
+  void compressFile(const std::string &inputFile,
+                    const std::string &outputBinaryFile,
+                    const std::string &codesFile);
 };

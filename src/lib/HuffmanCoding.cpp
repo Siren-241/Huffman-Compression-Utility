@@ -1,9 +1,11 @@
 #include "include/HuffmanCoding.h"
+#include <iostream>
 
 HuffmanNode::HuffmanNode(char data, int freq) {
   this->data = data;
   this->freq = freq;
-  left = HuffmanNode::right = nullptr;
+  this->left = nullptr;
+  this->right = nullptr;
 }
 
 void HuffmanCoding::buildFrequencyMap(const std::string &text) {
@@ -68,7 +70,6 @@ void HuffmanCoding::writeCompressedFile(const std::string &encodedText,
     }
   }
 
-  // Handle remaining bits (if any)
   if (!byte.empty()) {
     while (byte.size() < 8)
       byte += "0";
@@ -97,4 +98,17 @@ void HuffmanCoding::compress(const std::string &inputText,
   std::string encoded = encodeText(inputText);
   writeCompressedFile(encoded, outputBinaryFile);
   writeCodesToFile(codesFile);
+}
+
+std::string HuffmanCoding::readFile(const std::string &filePath) {
+  std::ifstream in(filePath, std::ios::binary);
+  return std::string((std::istreambuf_iterator<char>(in)),
+                     std::istreambuf_iterator<char>());
+}
+
+void HuffmanCoding::compressFile(const std::string &inputFile,
+                                 const std::string &outputBinaryFile,
+                                 const std::string &codesFile) {
+  std::string text = readFile(inputFile);
+  compress(text, outputBinaryFile, codesFile);
 }
