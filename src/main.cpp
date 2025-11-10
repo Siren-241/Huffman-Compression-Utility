@@ -5,7 +5,18 @@
 #include <string>
 
 int main(int argc, char *argv[]) {
-  std::string inputFile = "../testFiles/10mb-examplefile-com.txt";
+
+  if (argc > 1) {
+    if (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help")
+      std::cout << "Usage:\n1. Compression: ./Compressor [input_file] "
+                   "[output_file_path] "
+                   "[output_codes_path]\n2. Decompression: ./Compressor -d "
+                   "[compressed_file_path] "
+                   "[codes_file_path] [target_decompressed_path]\n";
+    return 0;
+  }
+
+  std::string inputFile = "../testFiles/input.txt";
   std::string compressedFile = "../output/compressed.bin";
   std::string codesFile = "../output/codes.txt";
   std::string decompressedFile = "../output/decompressed.txt";
