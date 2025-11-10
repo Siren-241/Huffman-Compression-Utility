@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bitset>
+#include <cstdint>
 #include <fstream>
 #include <queue>
 #include <string>
@@ -50,4 +51,10 @@ public:
   void compressFile(const std::string &inputFile,
                     const std::string &outputBinaryFile,
                     const std::string &codesFile);
+
+  // New helpers for decompression
+  void loadCodesFromFile(const std::string &file);
+  void decompressFile(const std::string &inputBinaryFile,
+                      const std::string &codesFile,
+                      const std::string &outputFile);
 };

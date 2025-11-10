@@ -1,26 +1,52 @@
 #include "lib/include/HuffmanCoding.h"
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <string>
 
 int main(int argc, char *argv[]) {
-  if (argc < 2) {
-    std::cerr << "Usage: " << argv[0]
-              << " <input_file> [compressed_file] [codes_file]\n";
-    return 1;
+  std::string inputFile = "../testFiles/10mb-examplefile-com.txt";
+  std::string compressedFile = "../output/compressed.bin";
+  std::string codesFile = "../output/codes.txt";
+  std::string decompressedFile = "../output/decompressed.txt";
+
+  // Ensure directories exist
+  std::filesystem::create_directories("testFiles");
+  std::filesystem::create_directories("output");
+
+  HuffmanCoding huffman;
+
+  // Case 1: Decompression Mode => ./a.out -d compressed.bin codes.txt
+  // decompressed.txt
+  if (argc > 1 && std::string(argv[1]) == "-d") {
+    if (argc >= 3)
+      compressedFile = argv[2];
+    if (argc >= 4)
+      codesFile = argv[3];
+    if (argc >= 5)
+      decompressedFile = argv[4];
+
+    std::cout << "Decompressing...\n";
+    huffman.decompressFile(compressedFile, codesFile, decompressedFile);
+    std::cout << "Decompression complete.\n";
+    std::cout << "Output written to: " << decompressedFile << "\n";
+    return 0;
   }
 
-  std::string inputFile = argv[1];
-  std::string outputBinary = (argc >= 3) ? argv[2] : "../output/compressed.bin";
-  std::string outputCodes = (argc >= 4) ? argv[3] : "../output/codes.txt";
+  // Case 2: Compression Mode with args => ./a.out input.txt compressed.bin
+  // codes.txt
+  if (argc > 1) {
+    inputFile = argv[1];
+    if (argc >= 3)
+      compressedFile = argv[2];
+    if (argc >= 4)
+      codesFile = argv[3];
+  }
 
-  std::filesystem::create_directories(
-      std::filesystem::path(outputBinary).parent_path());
-  std::filesystem::create_directories(
-      std::filesystem::path(outputCodes).parent_path());
-
+  // Case 3: Default compression when no arguments
   std::ifstream inFile(inputFile, std::ios::binary);
   if (!inFile) {
-    std::cerr << "Unable to open file: " << inputFile << "\n";
+    std::cerr << "Error: Could not open input file: " << inputFile << "\n";
     return 1;
   }
 
@@ -28,11 +54,12 @@ int main(int argc, char *argv[]) {
                    std::istreambuf_iterator<char>());
   inFile.close();
 
-  HuffmanCoding compressor;
-  compressor.compress(text, outputBinary, outputCodes);
+  std::cout << "Compressing...\n";
+  huffman.compress(text, compressedFile, codesFile);
 
-  std::cout << "Compression complete.\n";
-  std::cout << "Compressed file: " << outputBinary << "\n";
-  std::cout << "Huffman codes: " << outputCodes << "\n";
+  std::cout << "Compression Complete.\n";
+  std::cout << "Compressed File: " << compressedFile << "\n";
+  std::cout << "Codes File: " << codesFile << "\n";
+
   return 0;
 }
