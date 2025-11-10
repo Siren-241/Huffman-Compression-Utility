@@ -1,11 +1,36 @@
-# Huffman Compression Utility
+# Huffman Coding File Compression and Decompression
 
-## Prepare Input Files
+## Project Structure
 
-1. Make a folder called "testFiles" at root of the project
-2. Put in it the files that you want to compress
+```
+project/
+│
+├── testFiles/
+│   └── input.txt                   # Place the text file you want to compress here
+│
+├── output/
+│   ├── compressed.bin              # Generated compressed binary file
+│   ├── codes.txt                   # Huffman codes used for compression
+│   └── decompressed.txt            # Output after decompression
+│
+├── src/
+|   ├── main.cpp                     # Entry point with CLI + default behavior
+|   └── lib/
+│       ├── HuffmanCoding.cpp        # Method implementations
+│       └── include/
+│           └── HuffmanCoding.h      # Class definitions and method declarations
+```
 
-## Building the Project
+---
+
+## Dependencies
+
+- **C++17 or above**
+- Standard Library (no external libraries required)
+
+---
+
+## Build Instructions
 
 1. Make a folder called "build" at root of project
 2. Open it in terminal
@@ -14,7 +39,7 @@
 
    `cmake --build .`
 
-   `./Compressor testFiles/{name-of-your-file-to-compress}`
+   `./Compressor --help`
 
 **One after the other**
 
