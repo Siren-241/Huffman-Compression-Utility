@@ -37,8 +37,9 @@ private:
   void writeCompressedFile(const std::string &encodedText,
                            const std::string &outputFile);
   void writeCodesToFile(const std::string &file);
-  std::string encodeText(const std::string &text);
+  void printProgressBar(size_t current, size_t total);
 
+  std::string encodeText(const std::string &text);
   std::string readFile(const std::string &filePath);
 
 public:
@@ -54,6 +55,8 @@ public:
 
   // New helpers for decompression
   void loadCodesFromFile(const std::string &file);
+  void decompress(const std::string &inputBinaryFile,
+                  const std::string &codesFile, const std::string &outputFile);
   void decompressFile(const std::string &inputBinaryFile,
                       const std::string &codesFile,
                       const std::string &outputFile);

@@ -1,72 +1,94 @@
 #include "lib/include/HuffmanCoding.h"
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <string>
 
+namespace fs = std::filesystem;
+
+void showUsage(const std::string &programName) {
+  std::cout << "Usage:\n";
+  std::cout << "  Compression:   " << programName
+            << " -c <input_file> <output_bin_path> <output_codes_path>\n";
+  std::cout << "  Decompression: " << programName
+            << " -d <input_bin_path> <input_codes_path> <output_file_path>\n";
+}
+
 int main(int argc, char *argv[]) {
-
-  if (argc > 1) {
-    if (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help") {
-      std::cout << "Usage:\n1. Compression: ./Compressor [input_file] "
-                   "[output_file_path] "
-                   "[output_codes_path]\n2. Decompression: ./Compressor -d "
-                   "[compressed_file_path] "
-                   "[codes_file_path] [target_decompressed_path]\n";
-      return 0;
-    }
-  }
-
-  std::string inputFile = "../testFiles/input.txt";
-  std::string compressedFile = "../output/compressed.bin";
-  std::string codesFile = "../output/codes.txt";
-  std::string decompressedFile = "../output/decompressed.txt";
-
-  // create directories if not exists
-  std::filesystem::create_directories("testFiles");
-  std::filesystem::create_directories("output");
-
-  HuffmanCoding huffman;
-
-  if (argc > 1 && std::string(argv[1]) == "-d") {
-    if (argc >= 3)
-      compressedFile = argv[2];
-    if (argc >= 4)
-      codesFile = argv[3];
-    if (argc >= 5)
-      decompressedFile = argv[4];
-
-    std::cout << "Decompressing...\n";
-    huffman.decompressFile(compressedFile, codesFile, decompressedFile);
-    std::cout << "Decompression complete.\n";
-    std::cout << "Output written to: " << decompressedFile << "\n";
-    return 0;
-  }
-
-  if (argc > 1) {
-    inputFile = argv[1];
-    if (argc >= 3)
-      compressedFile = argv[2];
-    if (argc >= 4)
-      codesFile = argv[3];
-  }
-
-  std::ifstream inFile(inputFile, std::ios::binary);
-  if (!inFile) {
-    std::cerr << "Error: Could not open input file: " << inputFile << "\n";
+  if (argc < 2) {
+    showUsage(argv[0]);
     return 1;
   }
 
-  std::string text((std::istreambuf_iterator<char>(inFile)),
-                   std::istreambuf_iterator<char>());
-  inFile.close();
+  std::string mode = argv[1];
+  HuffmanCoding coder;
 
-  std::cout << "Compressing...\n";
-  huffman.compress(text, compressedFile, codesFile);
+  if (mode == "-c") {
+    if (argc < 5) {
+      std::cerr << "Error: Compression requires input file, output binary "
+                   "path, and output codes path.\n";
+      showUsage(argv[0]);
+      return 1;
+    }
 
-  std::cout << "Compression Complete.\n";
-  std::cout << "Compressed File: " << compressedFile << "\n";
-  std::cout << "Codes File: " << codesFile << "\n";
+    std::string inputFile = argv[2];
+    std::string outputBin = argv[3];
+    std::string outputCodes = argv[4];
+
+    if (!fs::exists(inputFile)) {
+      std::cerr << "Error: Input file not found: " << inputFile << std::endl;
+      return 1;
+    }
+
+    std::cout << "Target Input: " << inputFile << "\n";
+    std::cout << "Output Bin:   " << outputBin << "\n";
+    std::cout << "Output Codes: " << outputCodes << "\n";
+
+    try {
+      coder.compressFile(inputFile, outputBin, outputCodes);
+    } catch (const std::exception &e) {
+      std::cerr << "\nError during compression: " << e.what() << std::endl;
+      return 1;
+    }
+
+  } else if (mode == "-d") {
+    if (argc < 5) {
+      std::cerr << "Error: Decompression requires input binary path, input "
+                   "codes path, and output file path.\n";
+      showUsage(argv[0]);
+      return 1;
+    }
+
+    std::string inputBin = argv[2];
+    std::string inputCodes = argv[3];
+    std::string outputFile = argv[4];
+
+    if (!fs::exists(inputBin)) {
+      std::cerr << "Error: Input binary file not found: " << inputBin
+                << std::endl;
+      return 1;
+    }
+    if (!fs::exists(inputCodes)) {
+      std::cerr << "Error: Input codes file not found: " << inputCodes
+                << std::endl;
+      return 1;
+    }
+
+    std::cout << "Input Binary: " << inputBin << "\n";
+    std::cout << "Input Codes:  " << inputCodes << "\n";
+    std::cout << "Output File:  " << outputFile << "\n";
+
+    try {
+      coder.decompressFile(inputBin, inputCodes, outputFile);
+    } catch (const std::exception &e) {
+      std::cerr << "\nError during decompression: " << e.what() << std::endl;
+      return 1;
+    }
+
+  } else {
+    std::cerr << "Unknown mode: " << mode << "\n";
+    showUsage(argv[0]);
+    return 1;
+  }
 
   return 0;
 }

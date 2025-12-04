@@ -1,9 +1,13 @@
 #include "include/HuffmanCoding.h"
+#include <chrono>
+#include <filesystem>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
 
-// Constructor
+namespace fs = std::filesystem;
+
 HuffmanNode::HuffmanNode(char data, int freq) {
   this->data = data;
   this->freq = freq;
@@ -11,7 +15,23 @@ HuffmanNode::HuffmanNode(char data, int freq) {
   this->right = nullptr;
 }
 
-// Build frequency map from text
+void HuffmanCoding::printProgressBar(size_t current, size_t total) {
+  float progress = static_cast<float>(current) / total;
+  int barWidth = 50;
+  std::cout << "[";
+  int pos = barWidth * progress;
+  for (int i = 0; i < barWidth; ++i) {
+    if (i < pos)
+      std::cout << "=";
+    else if (i == pos)
+      std::cout << ">";
+    else
+      std::cout << " ";
+  }
+  std::cout << "] " << int(progress * 100.0) << " %\r";
+  std::cout.flush();
+}
+
 void HuffmanCoding::buildFrequencyMap(const std::string &text) {
   freqMap.clear();
   for (unsigned char uch : text) {
@@ -20,7 +40,6 @@ void HuffmanCoding::buildFrequencyMap(const std::string &text) {
   }
 }
 
-// Build Huffman Tree
 void HuffmanCoding::buildHuffmanTree() {
   std::priority_queue<HuffmanNode *, std::vector<HuffmanNode *>, Compare> pq;
 
@@ -38,7 +57,7 @@ void HuffmanCoding::buildHuffmanTree() {
     pq.pop();
     HuffmanNode *parent = new HuffmanNode('\0', only->freq);
     parent->left = only;
-    parent->right = new HuffmanNode('\0', 0); // empty leaf
+    parent->right = new HuffmanNode('\0', 0);
     pq.push(parent);
   }
 
@@ -80,6 +99,11 @@ void HuffmanCoding::generateCodes(HuffmanNode *node, std::string currentCode) {
 std::string HuffmanCoding::encodeText(const std::string &text) {
   std::string encoded;
   encoded.reserve(text.size());
+  size_t total = text.size();
+  size_t current = 0;
+
+  std::cout << "Encoding:\n";
+
   for (unsigned char uch : text) {
     char ch = static_cast<char>(uch);
     auto it = codes.find(ch);
@@ -88,7 +112,14 @@ std::string HuffmanCoding::encodeText(const std::string &text) {
     } else {
       std::cerr << "Warning: character with no code found during encoding\n";
     }
+
+    current++;
+    if (current % (total / 50 + 1) == 0) {
+      printProgressBar(current, total);
+    }
   }
+  printProgressBar(total, total);
+  std::cout << std::endl;
   return encoded;
 }
 
@@ -126,7 +157,6 @@ void HuffmanCoding::writeCompressedFile(const std::string &encodedText,
   out.close();
 }
 
-// Save codes to file
 void HuffmanCoding::writeCodesToFile(const std::string &file) {
   std::ofstream out(file);
   if (!out) {
@@ -154,6 +184,7 @@ void HuffmanCoding::compress(const std::string &inputText,
   generateCodes(root, "");
 
   std::string encoded = encodeText(inputText);
+  std::cout << "Writing to File...\n";
   writeCompressedFile(encoded, outputBinaryFile);
   writeCodesToFile(codesFile);
 }
@@ -170,8 +201,40 @@ std::string HuffmanCoding::readFile(const std::string &filePath) {
 void HuffmanCoding::compressFile(const std::string &inputFile,
                                  const std::string &outputBinaryFile,
                                  const std::string &codesFile) {
+  std::cout << "\n--- Starting Compression Benchmark ---\n";
+  auto start = std::chrono::high_resolution_clock::now();
+
   std::string text = readFile(inputFile);
   compress(text, outputBinaryFile, codesFile);
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+
+  size_t originalSize = 0;
+  size_t compressedSize = 0;
+
+  try {
+    originalSize = fs::file_size(inputFile);
+    compressedSize = fs::file_size(outputBinaryFile);
+  } catch (...) {
+  }
+
+  double savings = 0.0;
+  if (originalSize > 0) {
+    savings =
+        (1.0 - (static_cast<double>(compressedSize) / originalSize)) * 100.0;
+  }
+
+  std::cout << "--------------------------------------\n";
+  std::cout << "       COMPRESSION REPORT             \n";
+  std::cout << "--------------------------------------\n";
+  std::cout << "Time Taken      : " << std::fixed << std::setprecision(4)
+            << elapsed.count() << " s\n";
+  std::cout << "Original Size   : " << originalSize << " bytes\n";
+  std::cout << "Compressed Size : " << compressedSize << " bytes\n";
+  std::cout << "Space Saved     : " << std::fixed << std::setprecision(2)
+            << savings << " %\n";
+  std::cout << "--------------------------------------\n";
 }
 
 void HuffmanCoding::loadCodesFromFile(const std::string &file) {
@@ -190,10 +253,9 @@ void HuffmanCoding::loadCodesFromFile(const std::string &file) {
   in.close();
 }
 
-void HuffmanCoding::decompressFile(const std::string &inputBinaryFile,
-                                   const std::string &codesFile,
-                                   const std::string &outputFile) {
-
+void HuffmanCoding::decompress(const std::string &inputBinaryFile,
+                               const std::string &codesFile,
+                               const std::string &outputFile) {
   loadCodesFromFile(codesFile);
 
   root = new HuffmanNode('\0', 0);
@@ -204,7 +266,7 @@ void HuffmanCoding::decompressFile(const std::string &inputBinaryFile,
         if (!curr->left)
           curr->left = new HuffmanNode('\0', 0);
         curr = curr->left;
-      } else { // '1'
+      } else {
         if (!curr->right)
           curr->right = new HuffmanNode('\0', 0);
         curr = curr->right;
@@ -245,6 +307,10 @@ void HuffmanCoding::decompressFile(const std::string &inputBinaryFile,
         "Unable to open output file for writing during decompression");
   }
 
+  std::cout << "Decoding:\n";
+  size_t totalBits = bitString.size();
+  size_t currentBit = 0;
+
   HuffmanNode *curr = root;
   for (char bit : bitString) {
     if (!curr) {
@@ -260,7 +326,34 @@ void HuffmanCoding::decompressFile(const std::string &inputBinaryFile,
       out.put(curr->data);
       curr = root;
     }
+
+    currentBit++;
+    if (currentBit % (totalBits / 50 + 1) == 0) {
+      printProgressBar(currentBit, totalBits);
+    }
   }
+  printProgressBar(totalBits, totalBits);
+  std::cout << std::endl;
 
   out.close();
+}
+
+void HuffmanCoding::decompressFile(const std::string &inputBinaryFile,
+                                   const std::string &codesFile,
+                                   const std::string &outputFile) {
+  std::cout << "\n--- Starting Decompression Benchmark ---\n";
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  decompress(inputBinaryFile, codesFile, outputFile);
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+
+  std::cout << "--------------------------------------\n";
+  std::cout << "      DECOMPRESSION REPORT            \n";
+  std::cout << "--------------------------------------\n";
+  std::cout << "Time Taken      : " << std::fixed << std::setprecision(4)
+            << elapsed.count() << " s\n";
+  std::cout << "--------------------------------------\n";
 }
