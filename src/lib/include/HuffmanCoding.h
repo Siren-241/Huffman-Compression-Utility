@@ -38,25 +38,24 @@ private:
                            const std::string &outputFile);
   void writeCodesToFile(const std::string &file);
   void printProgressBar(size_t current, size_t total);
+  void loadCodesFromFile(const std::string &file);
 
   std::string encodeText(const std::string &text);
   std::string readFile(const std::string &filePath);
 
-public:
-  HuffmanCoding() : root(nullptr) {}
-
   void compress(const std::string &inputText,
                 const std::string &outputBinaryFile,
                 const std::string &codesFile);
+  void decompress(const std::string &inputBinaryFile,
+                  const std::string &codesFile, const std::string &outputFile);
+
+public:
+  HuffmanCoding() : root(nullptr) {}
 
   void compressFile(const std::string &inputFile,
                     const std::string &outputBinaryFile,
                     const std::string &codesFile);
 
-  // New helpers for decompression
-  void loadCodesFromFile(const std::string &file);
-  void decompress(const std::string &inputBinaryFile,
-                  const std::string &codesFile, const std::string &outputFile);
   void decompressFile(const std::string &inputBinaryFile,
                       const std::string &codesFile,
                       const std::string &outputFile);
