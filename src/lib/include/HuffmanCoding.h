@@ -39,6 +39,8 @@ private:
   void writeCodesToFile(const std::string &file);
   void printProgressBar(size_t current, size_t total);
   void loadCodesFromFile(const std::string &file);
+  void writeDot(HuffmanNode *node, std::ostream &out);
+  void saveTreeToDot(const std::string &filename);
 
   std::string encodeText(const std::string &text);
   std::string readFile(const std::string &filePath);

@@ -77,6 +77,64 @@ void HuffmanCoding::buildHuffmanTree() {
   root = pq.top();
 }
 
+void HuffmanCoding::writeDot(HuffmanNode *node, std::ostream &out) {
+  if (!node)
+    return;
+
+  unsigned long long id = reinterpret_cast<unsigned long long>(node);
+
+  if (node->left || node->right) {
+    out << "  node" << id << " [label=\"" << node->freq
+        << "\", shape=circle, style=filled, fillcolor=\"#e0e0e0\"];\n";
+  } else {
+    std::string charDisplay;
+    if (node->data == '\n')
+      charDisplay = "\\\\n";
+    else if (node->data == '\r')
+      charDisplay = "\\\\r";
+    else if (node->data == '\t')
+      charDisplay = "\\\\t";
+    else if (node->data == ' ')
+      charDisplay = "SPACE";
+    else if (node->data == '\"')
+      charDisplay = "\\\"";
+    else
+      charDisplay = std::string(1, node->data);
+
+    out << "  node" << id << " [label=\"{" << charDisplay << " | " << node->freq
+        << "}\", shape=record, style=filled, fillcolor=\"#b3e6ff\"];\n";
+  }
+
+  if (node->left) {
+    unsigned long long leftId =
+        reinterpret_cast<unsigned long long>(node->left);
+    out << "  node" << id << " -> node" << leftId
+        << " [label=\"0\", color=\"#ff3333\", penwidth=2.0];\n";
+    writeDot(node->left, out);
+  }
+  if (node->right) {
+    unsigned long long rightId =
+        reinterpret_cast<unsigned long long>(node->right);
+    out << "  node" << id << " -> node" << rightId
+        << " [label=\"1\", color=\"#0066cc\", penwidth=2.0];\n";
+    writeDot(node->right, out);
+  }
+}
+
+void HuffmanCoding::saveTreeToDot(const std::string &filename) {
+  if (!root)
+    return;
+  std::ofstream out(filename);
+  out << "digraph HuffmanTree {\n";
+  out << "  rankdir=TB;\n";
+  out << "  node [fontname=\"Arial\"];\n";
+  out << "  edge [fontname=\"Arial\"];\n";
+  writeDot(root, out);
+  out << "}\n";
+  out.close();
+  std::cout << "Tree Visualization saved to: " << filename << "\n";
+}
+
 void HuffmanCoding::generateCodes(HuffmanNode *node, std::string currentCode) {
   if (!node)
     return;
@@ -181,6 +239,9 @@ void HuffmanCoding::compress(const std::string &inputText,
   if (!root) {
     throw std::runtime_error("No data to compress (empty input).");
   }
+
+  saveTreeToDot(outputBinaryFile + ".dot");
+
   generateCodes(root, "");
 
   std::string encoded = encodeText(inputText);
