@@ -41,6 +41,7 @@ private:
   void loadCodesFromFile(const std::string &file);
   void writeDot(HuffmanNode *node, std::ostream &out);
   void saveTreeToDot(const std::string &filename);
+  void freeTree(HuffmanNode *node);
 
   std::string encodeText(const std::string &text);
   std::string readFile(const std::string &filePath);
@@ -53,6 +54,7 @@ private:
 
 public:
   HuffmanCoding() : root(nullptr) {}
+  ~HuffmanCoding();
 
   void compressFile(const std::string &inputFile,
                     const std::string &outputBinaryFile,

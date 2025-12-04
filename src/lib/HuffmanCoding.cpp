@@ -15,6 +15,19 @@ HuffmanNode::HuffmanNode(char data, int freq) {
   this->right = nullptr;
 }
 
+HuffmanCoding::~HuffmanCoding() {
+  freeTree(root);
+  root = nullptr;
+}
+
+void HuffmanCoding::freeTree(HuffmanNode *node) {
+  if (!node)
+    return;
+  freeTree(node->left);
+  freeTree(node->right);
+  delete node;
+}
+
 void HuffmanCoding::printProgressBar(size_t current, size_t total) {
   float progress = static_cast<float>(current) / total;
   int barWidth = 50;
@@ -77,64 +90,6 @@ void HuffmanCoding::buildHuffmanTree() {
   root = pq.top();
 }
 
-void HuffmanCoding::writeDot(HuffmanNode *node, std::ostream &out) {
-  if (!node)
-    return;
-
-  unsigned long long id = reinterpret_cast<unsigned long long>(node);
-
-  if (node->left || node->right) {
-    out << "  node" << id << " [label=\"" << node->freq
-        << "\", shape=circle, style=filled, fillcolor=\"#e0e0e0\"];\n";
-  } else {
-    std::string charDisplay;
-    if (node->data == '\n')
-      charDisplay = "\\\\n";
-    else if (node->data == '\r')
-      charDisplay = "\\\\r";
-    else if (node->data == '\t')
-      charDisplay = "\\\\t";
-    else if (node->data == ' ')
-      charDisplay = "SPACE";
-    else if (node->data == '\"')
-      charDisplay = "\\\"";
-    else
-      charDisplay = std::string(1, node->data);
-
-    out << "  node" << id << " [label=\"{" << charDisplay << " | " << node->freq
-        << "}\", shape=record, style=filled, fillcolor=\"#b3e6ff\"];\n";
-  }
-
-  if (node->left) {
-    unsigned long long leftId =
-        reinterpret_cast<unsigned long long>(node->left);
-    out << "  node" << id << " -> node" << leftId
-        << " [label=\"0\", color=\"#ff3333\", penwidth=2.0];\n";
-    writeDot(node->left, out);
-  }
-  if (node->right) {
-    unsigned long long rightId =
-        reinterpret_cast<unsigned long long>(node->right);
-    out << "  node" << id << " -> node" << rightId
-        << " [label=\"1\", color=\"#0066cc\", penwidth=2.0];\n";
-    writeDot(node->right, out);
-  }
-}
-
-void HuffmanCoding::saveTreeToDot(const std::string &filename) {
-  if (!root)
-    return;
-  std::ofstream out(filename);
-  out << "digraph HuffmanTree {\n";
-  out << "  rankdir=TB;\n";
-  out << "  node [fontname=\"Arial\"];\n";
-  out << "  edge [fontname=\"Arial\"];\n";
-  writeDot(root, out);
-  out << "}\n";
-  out.close();
-  std::cout << "Tree Visualization saved to: " << filename << "\n";
-}
-
 void HuffmanCoding::generateCodes(HuffmanNode *node, std::string currentCode) {
   if (!node)
     return;
@@ -172,11 +127,12 @@ std::string HuffmanCoding::encodeText(const std::string &text) {
     }
 
     current++;
-    if (current % (total / 50 + 1) == 0) {
+    if (total > 0 && current % (total / 50 + 1) == 0) {
       printProgressBar(current, total);
     }
   }
-  printProgressBar(total, total);
+  if (total > 0)
+    printProgressBar(total, total);
   std::cout << std::endl;
   return encoded;
 }
@@ -232,6 +188,7 @@ void HuffmanCoding::compress(const std::string &inputText,
                              const std::string &codesFile) {
   codes.clear();
   freqMap.clear();
+  freeTree(root);
   root = nullptr;
 
   buildFrequencyMap(inputText);
@@ -239,9 +196,6 @@ void HuffmanCoding::compress(const std::string &inputText,
   if (!root) {
     throw std::runtime_error("No data to compress (empty input).");
   }
-
-  saveTreeToDot(outputBinaryFile + ".dot");
-
   generateCodes(root, "");
 
   std::string encoded = encodeText(inputText);
@@ -317,6 +271,9 @@ void HuffmanCoding::loadCodesFromFile(const std::string &file) {
 void HuffmanCoding::decompress(const std::string &inputBinaryFile,
                                const std::string &codesFile,
                                const std::string &outputFile) {
+  freeTree(root);
+  root = nullptr;
+
   loadCodesFromFile(codesFile);
 
   root = new HuffmanNode('\0', 0);
@@ -374,14 +331,9 @@ void HuffmanCoding::decompress(const std::string &inputBinaryFile,
 
   HuffmanNode *curr = root;
   for (char bit : bitString) {
-    if (!curr) {
-      throw std::runtime_error(
-          "Tree traversal encountered null node during decompression");
-    }
     curr = (bit == '0') ? curr->left : curr->right;
     if (!curr) {
-      throw std::runtime_error("Invalid traversal (null child) while decoding "
-                               "— codes or compressed data mismatch");
+      throw std::runtime_error("Invalid traversal during decoding");
     }
     if (!curr->left && !curr->right) {
       out.put(curr->data);
@@ -389,11 +341,12 @@ void HuffmanCoding::decompress(const std::string &inputBinaryFile,
     }
 
     currentBit++;
-    if (currentBit % (totalBits / 50 + 1) == 0) {
+    if (totalBits > 0 && currentBit % (totalBits / 50 + 1) == 0) {
       printProgressBar(currentBit, totalBits);
     }
   }
-  printProgressBar(totalBits, totalBits);
+  if (totalBits > 0)
+    printProgressBar(totalBits, totalBits);
   std::cout << std::endl;
 
   out.close();

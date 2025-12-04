@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     try {
       coder.compressFile(inputFile, outputBin, outputCodes);
     } catch (const std::exception &e) {
-      std::cerr << "\nError during compression: " << e.what() << std::endl;
+      std::cerr << "Error during compression: " << e.what() << std::endl;
       return 1;
     }
 
@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
                 << std::endl;
       return 1;
     }
+
     if (!fs::exists(inputCodes)) {
       std::cerr << "Error: Input codes file not found: " << inputCodes
                 << std::endl;
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
     try {
       coder.decompressFile(inputBin, inputCodes, outputFile);
     } catch (const std::exception &e) {
-      std::cerr << "\nError during decompression: " << e.what() << std::endl;
+      std::cerr << "Error during decompression: " << e.what() << std::endl;
       return 1;
     }
 
